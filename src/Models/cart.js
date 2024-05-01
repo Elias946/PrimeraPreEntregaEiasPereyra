@@ -1,55 +1,86 @@
-import products from '../Models/Product.js';
-import {appendFileSync, existsSync, readFileSync, writeFileSync} from 'fs'
+import products from "../Models/Product.js";
+import {
+  appendFileSync,
+  existsSync,
+  readFileSync,
+  writeFile,
+  writeFileSync,
+} from "fs";
 class Cart {
-    constructor() {
-        try {
-            this.product = new products();
-            this.products = [];
-            this.cart = JSON.parse(readFileSync('./src/data/cart.json', 'utf-8'))
-        } catch (error) {
-            writeFileSync('./src/data/cart.json', '[]', 'utf-8');
-            this.cart = [];
-        }
+  constructor() {
+    try {
+      this.product = new products();
+      this.products = [];
+      this.cart = JSON.parse(readFileSync("./src/data/cart.json", "utf-8"));
+    } catch (error) {
+      writeFileSync("./src/data/cart.json", "[]", "utf-8");
+      this.cart = [];
+    }
+  }
 
+  addCart(id, pid, quantity) {
+    if (!this.isValid(pid, quantity)) {
+      return { error: "product is not valid in cart" };
     }
 
-    addCart(id,pid,quantity){
-       
-        if(!this.isValid(pid,quantity)){
-            return {'error': 'product is not valid in cart'}
-        }
-        
-        try {
-            if(this.existCart(id)){
-               this.cart.product = this.cart.product.map((product) => {
-                   if(product.pid === parseInt(pid)){
-                       product.quantity += parseInt(quantity)
-                   }
-               })
-               writeFileSync('./src/data/cart.json', JSON.stringify(this.cart), 'utf-8')
-                return {'message': 'Product added to Cart', 'cart': this.cart}
+    try {
+      if (!this.existCart(id)) {
+        this.cart.push({ id, products: [{ pid, quantity }] });
+        writeFileSync("./src/data/cart.json", JSON.stringify(this.cart), "utf-8");
+        return { message: "This Cart is added successfully", cart: this.cart };
+      } else {
+        this.cart = this.cart.map((cart) =>
+          cart.id === id
+            ? {
+                ...cart,
+                products: cart.products.some((p) => p.pid === pid)
+                  ? cart.products.map((product) =>
+                      product.pid === pid
+                        ? { ...product, quantity: (product.quantity = quantity) }
+                        : product
+                    )
+                  : [...cart.products, { pid, quantity }],
+              }
+            : cart
+        );
+        writeFileSync("./src/data/cart.json", JSON.stringify(this.cart), "utf-8");
+        return { message: "This Cart is updated successfully", cart: this.cart };
+      }
+    } catch (error) {
+      return { error: error };
+    }
+  }
+  getCartById(id) {
+    return this.cart.find((cart) => cart.id === id);
+  }
+  deleteProductInCart(id, pid) {
+    try {
+      this.cart = this.cart.map((cart) =>
+        cart.id === id
+          ? {
+              ...cart,
+              products: cart.products.filter((product) => product.pid !== pid),
             }
+          : cart
+      );
+      writeFileSync("./src/data/cart.json", JSON.stringify(this.cart), "utf-8");
+      return { message: "Product deleted successfully", cart: this.cart };
+    } catch (error) {
+      return { error: error };
+    }
+  }
+  existCart(id) {
+    return this.cart.some((cart) => cart.id === id);
+  }
+  isValid(pid, quantity) {
+    return this.productExist(pid) && quantity > 0;
+  }
 
-            this.cart.push({"id":parseInt(id), "products":{"pid":pid, "quantity":quantity}});
-            writeFileSync('./src/data/cart.json', JSON.stringify(this.cart), 'utf-8')
-        return {'message': 'Product added to Cart', 'cart': this.cart}
-        } catch (error) {
-        return { 'error' : error }
-        }
-
+  productExist(pid) {
+    if (!Array.isArray(this.product.getProducts())) {
+      return false;
     }
-    getCartById(id){
-        return this.cart.some(cart => cart.id === parseInt(id))
-    }
-    existCart (id){
-        return this.cart.some(cart => cart.id === parseInt(id))
-    }
-    isValid(pid,quantity){
-        return (this.productExist(pid) && 
-        quantity > 0)
-    }
-    productExist(pid){
-        return this.product.getProducts().some((p) => p.id === parseInt(pid))
-    }
+    return this.product.getProducts().some((product) => product.id === pid);
+  }
 }
-export default Cart
+export default Cart;

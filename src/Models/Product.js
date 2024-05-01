@@ -1,5 +1,6 @@
 
 import {appendFileSync, existsSync, readFileSync, writeFileSync} from 'fs'
+
 class Product {
     constructor() {
         try {
@@ -32,7 +33,11 @@ class Product {
     
     }
 
-    getProducts(){
+    getProducts(limit){
+ 
+        if(limit !== undefined){
+            return this.products.slice(0, limit)
+        }
         if(this.products.length === 0){
             return { 'error': 'database is empty' }
         }

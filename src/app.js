@@ -6,9 +6,9 @@ const app = express()
 const port = 8080
 
 app.use(cookieParser())
-app.use('/public',express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use('/public',express.static('public'))
 
 app.use('/api/products', productRouter);
 app.use('/api/carts', cartRouter);

@@ -5,9 +5,10 @@ const router = Router();
 const productInstance = new Product();
 
 router.get("/", (req, res) => {
-    const products = productInstance.getProducts();
+    const products = productInstance.getProducts(req.query.limit);
     res.json(products);
 });
+
 
 router.get("/:id", (req, res) => {
     const product = productInstance.getProductsById(req.params.id);
